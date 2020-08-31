@@ -1,3 +1,6 @@
+import json
+import jsonpickle
+import os
 import tweepy
 import random
 import time
@@ -59,3 +62,28 @@ def limit_handler(cursor):
         except Exception:
             print(traceback.format_exc())
             exit(0)
+
+def save_json(data, path, overwrite=False):
+    if not os.path.exists(path):
+        with open(path, 'w+') as f:
+            encoded_data = jsonpickle.encode(data)
+            json.dump(encoded_data, f)
+    else:
+        if not overwrite:
+            with open(path, 'r') as f:
+                encoded_data = json.load(f)
+                existing_data = jsonpickle.decode(encoded_data)
+
+            # update existing data
+            if isinstance(existing_data, list) and isinstance(data, list):
+                existing_data.extend(data)
+                data = existing_data
+            elif isinstance(existing_data, dict) and isinstance(data, dict):
+                existing_data.update(data)
+                data = existing_data
+            else:
+                raise NotImplementedError("Existing data stored in unknown and/or different format than data")
+
+        # wite (maybe updated) data
+        with open(path, 'w') as f:
+            json.dump(data, f)
