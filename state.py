@@ -2,8 +2,7 @@ import json
 import os
 
 import jsonpickle
-
-from utils import save_json
+from utils import save_json, load_json
 
 class ScraperState:
     def __init__(self, origin_user=None,
@@ -24,26 +23,14 @@ class ScraperState:
         users_path = os.path.join(folder, "users.json")
         edges_path = os.path.join(folder, "edges.json")
         queue_path = os.path.join(folder, 'queue.json')
+        visited_ids_path = os.path.join(folder, 'visited.json')
 
         # load users
-        with open(users_path, 'r') as f:
-            encoded_data = json.load(f)
-            users = jsonpickle.decode(encoded_data)
+        users = load_json(users_path)
+        edges = load_json(edges_path)
+        queue = load_json(queue_path)
+        visited_ids = set(load_json(visited_ids_path))
 
-        # load edges
-        with open(edges_path, 'r') as f:
-            encoded_data = json.load(f)
-            edges = jsonpickle.decode(encoded_data)
-
-        # load queue
-        with open(queue_path, 'r') as f:
-            encoded_data = json.load(f)
-            queue = jsonpickle.decode(encoded_data)
-
-        # load visited
-        with open(queue_path, 'r') as f:
-            encoded_data = json.load(f)
-            visited_ids = jsonpickle.decode(encoded_data)
 
         return ScraperState(queue=queue, visited_ids=set(visited_ids), users=users, edges=edges)
 
@@ -54,9 +41,6 @@ class ScraperState:
 
         save_json(self.users, users_path)
         save_json(self.edges, edges_path)
-
-        self.users_to_persist = []
-        self.edges_to_persist = []
 
         ## Save state of queue and visited
         queue_path = os.path.join(folder, 'queue.json')
