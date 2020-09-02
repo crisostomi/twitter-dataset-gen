@@ -1,11 +1,10 @@
 import tweepy
 import os
+from tqdm import tqdm
 from utils import *
 from state import ScraperState
 
 DATA_PATH = './data'
-# USERS_FILE = os.path.join(DATA_PATH, 'users.json')
-# EDGES_FILE = os.path.join(DATA_PATH, 'edges.json')
 
 AUTH_DETAILS_FILE = 'config.txt'
 auth_details = parse_auth_details(AUTH_DETAILS_FILE)
@@ -21,17 +20,22 @@ for item in auth_details:
     auth.set_access_token(access_key, access_secret)
     auths.append(auth)
 
-api1 = tweepy.API(auths[0], wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
-api2 = tweepy.API(auths[1], wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
+apis = [
+    tweepy.API(auths[0], wait_on_rate_limit=True, wait_on_rate_limit_notify=True),
+    tweepy.API(auths[1], wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
+]
 
-MAX_USERS = 100000
+followers_api = 0
+followees_api = 1
+
+MAX_USERS = 10000
 MAX_CONNECTIONS = 1000
 
 COLD_START = False
 SAVE_INTERVAL = 10
 
 if COLD_START:
-    origin_user = get_origin_user(api1)
+    origin_user = get_origin_user(apis[1])
     scraper_state = ScraperState(origin_user=origin_user)
 else:
     scraper_state = ScraperState.load(DATA_PATH)
@@ -41,16 +45,22 @@ visited_ids = scraper_state.visited_ids
 users = scraper_state.users
 edges = scraper_state.edges
 
+# i = 0
+# for i, user_id in tqdm(enumerate(visited_ids), total=len(visited_ids), desc="Recovering user info..."):
+#     api = apis[i % 2]
+#     user = api.get_user(user_id)
+#     users.append(user)
+#
+# scraper_state.save(DATA_PATH)
 iterations = 0
-
-while len(users) < MAX_USERS and len(queue) > 0:
-    try:
+try:
+    while len(users) < MAX_USERS and len(queue) > 0:
         print(f'\n\nUsers: {len(users)}.\nEdges: {len(edges)}.\nQueue: {len(queue)}.')
         user_id = queue.pop(0)
         if isinstance(user_id, User):
             user = user_id
         else:
-            user = api1.get_user(user_id)
+            user = apis[followers_api].get_user(user_id)
             user = User(user)
 
         users.append(user)
@@ -60,7 +70,7 @@ while len(users) < MAX_USERS and len(queue) > 0:
             continue
 
         followers_list = list()
-        followers = tweepy.Cursor(api2.followers_ids, id=user.id).pages()
+        followers = tweepy.Cursor(apis[followers_api].followers_ids, id=user.id).pages()
         try:
             for follower_page in followers:
                 followers_list.extend(follower_page)
@@ -71,7 +81,7 @@ while len(users) < MAX_USERS and len(queue) > 0:
         # print(len(followers_list))
 
         followees_list = list()
-        followees = tweepy.Cursor(api1.friends_ids, id=user.id).pages()
+        followees = tweepy.Cursor(apis[followees_api].friends_ids, id=user.id).pages()
         try:
             for followee_page in followees:
                 followees_list.extend(followee_page)
@@ -94,9 +104,8 @@ while len(users) < MAX_USERS and len(queue) > 0:
         iterations += 1
 
         # Switch apis to balance load
-        tmp = api1
-        api1 = api2
-        api2 = tmp
+        followers_api = (followers_api + 1) % 2
+        followees_api = (followees_api + 1) % 2
 
         if iterations % SAVE_INTERVAL == 0:
             scraper_state = ScraperState(
@@ -106,13 +115,13 @@ while len(users) < MAX_USERS and len(queue) > 0:
                 edges=edges
             )
             scraper_state.save(DATA_PATH)
-    except KeyboardInterrupt:
-        print("\n\nInterrupt received. Terminating...")
-    finally:
-        scraper_state = ScraperState(
-            queue=queue,
-            visited_ids=visited_ids,
-            users=users,
-            edges=edges
-        )
-        scraper_state.save(DATA_PATH)
+except KeyboardInterrupt:
+    print("\n\nInterrupt received. Terminating...")
+finally:
+    scraper_state = ScraperState(
+        queue=queue,
+        visited_ids=visited_ids,
+        users=users,
+        edges=edges
+    )
+    scraper_state.save(DATA_PATH)

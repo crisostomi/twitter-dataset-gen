@@ -25,11 +25,34 @@ class ScraperState:
         queue_path = os.path.join(folder, 'queue.json')
         visited_ids_path = os.path.join(folder, 'visited.json')
 
+        users = []
+        edges = []
+        queue = []
+        visited_ids = set()
+
         # load users
-        users = load_json(users_path)
-        edges = load_json(edges_path)
-        queue = load_json(queue_path)
-        visited_ids = set(load_json(visited_ids_path))
+        try:
+            users = load_json(users_path)
+        except Exception as exc:
+            print("ERROR ON USERS LOADING!")
+            print(exc)
+        try:
+            edges = load_json(edges_path)
+        except Exception as exc:
+            print("ERROR ON EDGES LOADING!")
+            print(exc)
+
+        try:
+            queue = load_json(queue_path)
+        except Exception as exc:
+            print("ERROR ON QUEUE LOADING!")
+            print(exc)
+
+        try:
+            visited_ids = load_json(visited_ids_path)
+        except Exception as exc:
+            print("ERROR ON VISITED IDS LOADING!")
+            print(exc)
 
 
         return ScraperState(queue=queue, visited_ids=set(visited_ids), users=users, edges=edges)
