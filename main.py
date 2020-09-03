@@ -20,10 +20,12 @@ for item in auth_details:
     auth.set_access_token(access_key, access_secret)
     auths.append(auth)
 
+print("Creating API handler(s)...")
 apis = [
     tweepy.API(auths[0], wait_on_rate_limit=True, wait_on_rate_limit_notify=True),
     tweepy.API(auths[1], wait_on_rate_limit=True, wait_on_rate_limit_notify=True)
 ]
+print("Done.")
 
 followers_api = 0
 followees_api = 1
@@ -35,11 +37,14 @@ COLD_START = False
 SAVE_INTERVAL = 10
 
 if COLD_START:
+    print("Cold start. Looking for origin user...")
     origin_user = get_origin_user(apis[1])
     scraper_state = ScraperState(origin_user=origin_user)
 else:
+    print("Loading scraper state...")
     scraper_state = ScraperState.load(DATA_PATH)
 
+print("Done.")
 queue = scraper_state.queue
 visited_ids = scraper_state.visited_ids
 users = scraper_state.users
@@ -52,6 +57,7 @@ edges = scraper_state.edges
 #     users.append(user)
 #
 # scraper_state.save(DATA_PATH)
+print("Starting scraping...")
 iterations = 0
 try:
     while len(users) < MAX_USERS and len(queue) > 0:
@@ -60,8 +66,12 @@ try:
         if isinstance(user_id, User):
             user = user_id
         else:
-            user = apis[followers_api].get_user(user_id)
-            user = User(user)
+            try:
+                user = apis[followers_api].get_user(user_id)
+                user = User(user)
+            except tweepy.error.TweepError as exc:
+                print(f"\nCatched TweepError ({exc.response}). Ignoring user.")
+                continue
 
         users.append(user)
         visited_ids.add(user.id)
@@ -74,8 +84,8 @@ try:
         try:
             for follower_page in followers:
                 followers_list.extend(follower_page)
-        except tweepy.error.TweepError:
-            print("\nCatched TweepError. Ignoring user.")
+        except tweepy.error.TweepError as exc:
+            print(f"\nCatched TweepError ({exc.response}). Ignoring user.")
             continue
 
         # print(len(followers_list))
@@ -85,8 +95,8 @@ try:
         try:
             for followee_page in followees:
                 followees_list.extend(followee_page)
-        except tweepy.error.TweepError:
-            print("\nCatched TweepError. Ignoring user.")
+        except tweepy.error.TweepError as exc:
+            print(f"\nCatched TweepError ({exc.response}). Ignoring user.")
             continue
 
         # print(len(followees_list))
@@ -118,6 +128,7 @@ try:
 except KeyboardInterrupt:
     print("\n\nInterrupt received. Terminating...")
 finally:
+    print("Saving scraper state...")
     scraper_state = ScraperState(
         queue=queue,
         visited_ids=visited_ids,
@@ -125,3 +136,4 @@ finally:
         edges=edges
     )
     scraper_state.save(DATA_PATH)
+    print("Done.")
