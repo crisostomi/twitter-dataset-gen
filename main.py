@@ -1,5 +1,5 @@
 from utils import *
-from users_scraper import UsersScraper, UserScraperState
+from users_scraper import UserScraper, UserScraperState
 from tweet_scraper import TweetScraper, TweetScraperState
 from datetime import datetime, timedelta
 
@@ -14,18 +14,18 @@ COLD_START = False
 SAVE_INTERVAL = 10
 
 ### Tweet scraping params ###
-TIME_PERIOD = 3 # days
+TIME_PERIOD = 3  # days
 
-def user_scraping(apis):
+def scrape_users(apis):
     if COLD_START:
         print("Cold start. Looking for origin user...")
-        origin_user = get_origin_user(apis[1])
-        scraper_state = UserScraperState(origin_user=origin_user)
+        origin_user = UserScraper.get_origin_user(apis[1], max_connections=MAX_CONNECTIONS)
+        scraper_state = UserScraperState(first_state=True, origin_user=origin_user)
     else:
         print("Loading scraper state...")
-        scraper_state = UserScraperState.load(DATA_PATH)
+        scraper_state = UserScraperState(first_state=False, data_path=DATA_PATH)
 
-    scraper = UsersScraper(
+    scraper = UserScraper(
         data_path=DATA_PATH,
         state=scraper_state,
         max_users=MAX_USERS,
@@ -81,4 +81,4 @@ if __name__ == '__main__':
     ]
     print("Done.")
 
-    user_scraping(apis)
+    scrape_users(apis)
