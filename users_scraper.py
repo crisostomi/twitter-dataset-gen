@@ -97,7 +97,7 @@ class UserScraper:
                     user = apis[followers_api].get_user(user_id)
                     user = User(user)
                 except tweepy.error.TweepError as exc:
-                    print(f"\nCatched TweepError ({exc.response}). Ignoring user.")
+                    print(f"\nCatched TweepError ({exc}). Ignoring user.")
                     continue
 
                 users.append(user)
@@ -112,7 +112,7 @@ class UserScraper:
                     followers = self.get_connections_list(follower_cursor)
                     followees = self.get_connections_list(followee_cursor)
                 except tweepy.error.TweepError as exc:
-                    print(f"\nCatched TweepError ({exc.response}). Ignoring user.")
+                    print(f"\nCatched TweepError ({exc}). Ignoring user.")
                     continue
 
                 for follower_id in followers:

@@ -98,7 +98,7 @@ class TweetScraper:
                         if last_timestamp < ts:
                             break
                 except tweepy.error.TweepError as exc:
-                    print(f"\nCatched TweepError ({exc.response.title}: {exc.response.detail})."
+                    print(f"\nCatched TweepError ({exc})."
                           f"\nIgnoring user.")
                     continue
 

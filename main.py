@@ -13,7 +13,8 @@ AUTH_DETAILS_FILE = 'config.txt'
 MAX_USERS = 10000
 MAX_CONNECTIONS = 1000
 
-COLD_START = True
+COLD_START = False
+SCRAPING = 'tweets'
 SAVE_INTERVAL = 10
 
 ### Tweet scraping params ###
@@ -50,7 +51,7 @@ def scrape_tweets(apis):
         users_path = os.path.join(DATA_PATH, "users.json")
         users = load_json(users_path)
         users = [User(user) for user in users]
-        users_queue = [user.id for user in users]
+        users_queue = list(set([user.id for user in users]))
         scraper_state = TweetScraperState(
             users_queue=users_queue,
             time_window=time_window,
@@ -90,5 +91,9 @@ if __name__ == '__main__':
     ]
     print("Done.")
 
-    # user_scraping(apis)
-    scrape_tweets(apis)
+    if SCRAPING == 'users':
+        scrape_users(apis)
+    elif SCRAPING == 'tweets':
+        scrape_tweets(apis)
+    else:
+        raise NotImplementedError
