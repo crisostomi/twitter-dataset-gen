@@ -115,14 +115,14 @@ class UserScraper:
                 for follower_id in followers:
                     if follower_id not in visited_ids:
                         edges.append((follower_id, user.id))
-                        if follower_id not in queue_set and len(queue) < self.max_connections:
+                        if follower_id not in queue_set and len(queue) < self.max_users:
                             queue.append(follower_id)
                             queue_set.add(follower_id)
 
                 for followee_id in followees:
                     if followee_id not in visited_ids:
                         edges.append((user.id, followee_id))
-                        if followee_id not in queue_set and len(queue) < self.max_connections:
+                        if followee_id not in queue_set and len(queue) < self.max_users:
                             queue.append(followee_id)
                             queue_set.add(followee_id)
 
