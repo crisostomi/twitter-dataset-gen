@@ -13,7 +13,7 @@ AUTH_DETAILS_FILE = 'config.txt'
 MAX_USERS = 10000
 MAX_CONNECTIONS = 1000
 
-COLD_START = False
+COLD_START = True
 SCRAPING = 'tweets'
 SAVE_INTERVAL = 10
 
@@ -43,7 +43,7 @@ def scrape_users(apis):
 
 def scrape_tweets(apis):
     if COLD_START:
-        print("Cold start. Creating empy state...")
+        print("Cold start. Creating empty state...")
         te = datetime.now()
         ts = te - timedelta(days=TIME_PERIOD)
         time_window = (ts, te)

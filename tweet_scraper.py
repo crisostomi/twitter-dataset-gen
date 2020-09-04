@@ -106,9 +106,12 @@ class TweetScraper:
                 user_tweets_list = []
                 for tweet in user_tweets:
                     if tweet.created_at >= ts and tweet.created_at <= te:
+                        tweet = Tweet(tweet)
+                        assert tweet.author == user_id
                         user_tweets_list.append(tweet)
 
                 # Register user tweets
+
                 tweets[user_id] = user_tweets_list
                 tweets_count += len(user_tweets_list)
 

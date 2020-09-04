@@ -1,8 +1,12 @@
+import tweepy
+
 class Tweet(dict):
     def __init__(self, tweet):
-        super().__init__(self, id=tweet.id, author=tweet.user, attrs=tweet)
+        assert isinstance(tweet, tweepy.models.Status)
+
+        super().__init__(self, id=tweet.id, author=tweet.user.id, attrs=tweet)
         self.id = tweet.id
-        self.author = tweet.author
+        self.author = tweet.user.id
         self.attrs = tweet
 
     def __eq__(self, o: object) -> bool:
