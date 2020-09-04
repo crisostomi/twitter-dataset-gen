@@ -5,7 +5,7 @@ import tweepy
 import random
 import time
 import traceback
-from User import User
+from user import User
 from ssl import SSLError
 from requests.exceptions import Timeout, ConnectionError
 from urllib3.exceptions import ReadTimeoutError
