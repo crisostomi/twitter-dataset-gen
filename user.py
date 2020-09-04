@@ -1,10 +1,18 @@
+import tweepy
+
 class User(dict):
     def __init__(self, user):
-        if isinstance(user, User):
+        if isinstance(user, dict):
+            self.id = user['id']
+            if 'py/object' in user['attrs'].keys():
+                self.attrs = user['attrs']['py/state']
+            else:
+                self.attrs = user['attrs']
+        elif isinstance(user, User):
             super().__init__(self, id=user.id, attrs=user.attrs)
             self.id = user.id
             self.attrs = user.attrs
-        else:
+        elif isinstance(user, tweepy.models.User):
             super().__init__(self, id=user.id, attrs=user)
             self.id = user.id
             self.attrs = user
