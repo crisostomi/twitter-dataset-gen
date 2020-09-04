@@ -3,6 +3,9 @@ from users_scraper import UsersScraper, UserScraperState
 from tweet_scraper import TweetScraper, TweetScraperState
 from datetime import datetime, timedelta
 
+from user import User
+import tweepy
+
 DATA_PATH = './data'
 AUTH_DETAILS_FILE = 'config.txt'
 
@@ -10,7 +13,7 @@ AUTH_DETAILS_FILE = 'config.txt'
 MAX_USERS = 10000
 MAX_CONNECTIONS = 1000
 
-COLD_START = False
+COLD_START = True
 SAVE_INTERVAL = 10
 
 ### Tweet scraping params ###
@@ -39,19 +42,22 @@ def user_scraping(apis):
 
 def tweet_scraping(apis):
     if COLD_START:
+        print("Cold start. Creating empy state...")
         te = datetime.now()
         ts = te - timedelta(days=TIME_PERIOD)
         time_window = (ts, te)
 
         users_path = os.path.join(DATA_PATH, "users.json")
         users = load_json(users_path)
+        users = [User(user) for user in users]
         users_queue = [user.id for user in users]
         scraper_state = TweetScraperState(
             users_queue=users_queue,
             time_window=time_window,
-            tweets=[]
+            tweets=dict()
         )
     else:
+        print("Loading scraper state...")
         scraper_state = TweetScraperState.load(DATA_PATH)
 
     scraper = TweetScraper(
@@ -59,6 +65,9 @@ def tweet_scraping(apis):
         state=scraper_state,
         save_interval=SAVE_INTERVAL
     )
+    print("Done.")
+
+    scraper.scrape(apis)
 
 if __name__ == '__main__':
     auth_details = parse_auth_details(AUTH_DETAILS_FILE)
@@ -81,4 +90,5 @@ if __name__ == '__main__':
     ]
     print("Done.")
 
-    user_scraping(apis)
+    # user_scraping(apis)
+    tweet_scraping(apis)

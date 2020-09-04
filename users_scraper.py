@@ -112,7 +112,8 @@ class UsersScraper:
                         user = apis[followers_api].get_user(user_id)
                         user = User(user)
                     except tweepy.error.TweepError as exc:
-                        print(f"\nCatched TweepError ({exc.response}). Ignoring user.")
+                        print(f"\nCatched TweepError ({exc.response.title}: {exc.response.detail})."
+                          f"\nIgnoring user.")
                         continue
 
                 users.append(user)
@@ -127,7 +128,8 @@ class UsersScraper:
                     for follower_page in followers:
                         followers_list.extend(follower_page)
                 except tweepy.error.TweepError as exc:
-                    print(f"\nCatched TweepError ({exc.response}). Ignoring user.")
+                    print(f"\nCatched TweepError ({exc.response.title}: {exc.response.detail})."
+                          f"\nIgnoring user.")
                     continue
 
                 # print(len(followers_list))
@@ -138,7 +140,8 @@ class UsersScraper:
                     for followee_page in followees:
                         followees_list.extend(followee_page)
                 except tweepy.error.TweepError as exc:
-                    print(f"\nCatched TweepError ({exc.response}). Ignoring user.")
+                    print(f"\nCatched TweepError ({exc.response.title}: {exc.response.detail})."
+                          f"\nIgnoring user.")
                     continue
 
                 # print(len(followees_list))

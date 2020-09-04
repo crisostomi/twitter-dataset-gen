@@ -5,10 +5,12 @@ import tweepy
 import random
 import time
 import traceback
-from user import User
 from ssl import SSLError
 from requests.exceptions import Timeout, ConnectionError
 from urllib3.exceptions import ReadTimeoutError
+
+from user import User
+import tweepy
 
 
 def parse_auth_details(auth_details_file):
