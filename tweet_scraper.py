@@ -2,7 +2,6 @@ import tweepy
 from tweet import Tweet
 from utils import save_json, load_json
 import os
-from datetime import datetime, timedelta
 
 class TweetScraperState:
     def __init__(
@@ -50,6 +49,7 @@ class TweetScraperState:
         return TweetScraperState(tweets=tweets, users_queue=users_queue, time_window=time_window)
 
     def save(self, folder):
+        print("Saving scraper state...")
         tweets_path = os.path.join(folder, "tweets.json")
         users_queue_path = os.path.join(folder, "users_queue.json")
         time_window_path = os.path.join(folder, "time_window.json")
@@ -57,6 +57,7 @@ class TweetScraperState:
         save_json(self.tweets, tweets_path)
         save_json(self.users_queue, users_queue_path)
         save_json(self.time_window, time_window_path)
+        print('Done.')
 
 
 class TweetScraper:
@@ -117,21 +118,9 @@ class TweetScraper:
                 # Save progress
                 iterations += 1
                 if iterations % self.save_interval == 0:
-                    scraper_state = TweetScraperState(
-                        tweets=tweets,
-                        users_queue=users_id_queue,
-                        time_window=time_window
-                    )
-                    scraper_state.save(self.data_path)
+                    self.state.save(self.data_path)
 
         except KeyboardInterrupt:
             print("\n\nInterrupt received. Terminating...")
         finally:
-            print("Saving scraper state...")
-            scraper_state = TweetScraperState(
-                tweets=tweets,
-                users_queue=users_id_queue,
-                time_window=time_window
-            )
-            scraper_state.save(self.data_path)
-            print("Done.")
+            self.state.save(self.data_path)

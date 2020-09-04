@@ -35,6 +35,7 @@ class UserScraperState:
             exit(0)
 
     def save(self, folder):
+        print("Saving scraper state...")
         # save users and edges
         users_path = os.path.join(folder, "users.json")
         edges_path = os.path.join(folder, "edges.json")
@@ -48,6 +49,8 @@ class UserScraperState:
 
         save_json(self.queue, queue_path)
         save_json(list(self.visited_ids), visited_ids_path)
+
+        print("Done.")
 
     def __repr__(self):
         return f"Queue: {self.queue}\n\n" \
@@ -138,9 +141,7 @@ class UserScraper:
         except KeyboardInterrupt:
             print("\n\nInterrupt received. Terminating...")
         finally:
-            print("Saving scraper state...")
             self.state.save(self.data_path)
-            print("Done.")
 
     def get_connections_list(self, cursor):
         connections_list = list()
