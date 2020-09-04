@@ -1,74 +1,52 @@
 import tweepy
 from user import User
-from utils import save_json, load_json
+from utils import save_json, load_json, limit_handler
 import os
+import random
+
 
 class UserScraperState:
-    def __init__(self, origin_user=None,
-                 queue=None, visited_ids=None, users=None, edges=None):
-        if origin_user is not None:
-            self.queue = [origin_user]
+    def __init__(self, first_state, origin_user=None, data_path=None):
+
+        assert (first_state and origin_user) or data_path
+
+        if first_state:
+            self.queue = [origin_user.id]
             self.visited_ids = set()
             self.users = []
             self.edges = []
         else:
-            self.queue = queue
-            self.visited_ids = visited_ids
-            self.users = users
-            self.edges = edges
+            self.load_state(data_path)
 
-    @staticmethod
-    def load(folder):
+    def load_state(self, folder):
         users_path = os.path.join(folder, "users.json")
         edges_path = os.path.join(folder, "edges.json")
         queue_path = os.path.join(folder, 'queue.json')
         visited_ids_path = os.path.join(folder, 'visited.json')
 
-        users = []
-        edges = []
-        queue = []
-        visited_ids = set()
-
-        # load users
         try:
-            users = load_json(users_path)
+            self.users = load_json(users_path)
+            self.edges = load_json(edges_path)
+            self.queue = load_json(queue_path)
+            self.visited_ids = set(load_json(visited_ids_path))
         except Exception as exc:
-            print("ERROR ON USERS LOADING!")
+            print(f'Error on data loading.')
             print(exc)
-        try:
-            edges = load_json(edges_path)
-        except Exception as exc:
-            print("ERROR ON EDGES LOADING!")
-            print(exc)
-
-        try:
-            queue = load_json(queue_path)
-        except Exception as exc:
-            print("ERROR ON QUEUE LOADING!")
-            print(exc)
-
-        try:
-            visited_ids = load_json(visited_ids_path)
-        except Exception as exc:
-            print("ERROR ON VISITED IDS LOADING!")
-            print(exc)
-
-
-        return UserScraperState(queue=queue, visited_ids=set(visited_ids), users=users, edges=edges)
+            exit(0)
 
     def save(self, folder):
-        ## Persist users and edges
+        # save users and edges
         users_path = os.path.join(folder, "users.json")
         edges_path = os.path.join(folder, "edges.json")
 
         save_json(self.users, users_path)
         save_json(self.edges, edges_path)
 
-        ## Save state of queue and visited
+        # Save state of queue and visited
         queue_path = os.path.join(folder, 'queue.json')
-        save_json(self.queue, queue_path)
-
         visited_ids_path = os.path.join(folder, 'visited.json')
+
+        save_json(self.queue, queue_path)
         save_json(list(self.visited_ids), visited_ids_path)
 
     def __repr__(self):
@@ -77,7 +55,9 @@ class UserScraperState:
                f"Users: {self.users}\n\n" \
                f"Edges: {self.edges}\n\n"
 
-class UsersScraper:
+
+class UserScraper:
+
     def __init__(
             self,
             data_path,
@@ -93,68 +73,58 @@ class UsersScraper:
         self.save_interval = save_interval
 
     def scrape(self, apis):
-        assert not (self.data_path is None or self.state is None)
+        assert self.data_path is not None and self.state is not None
 
         queue, visited_ids, users, edges = self.state.queue, self.state.visited_ids, self.state.users, self.state.edges
 
-        followers_api = 0
-        followees_api = 1
+        queue_set = set(queue)
+
+        followers_api, followees_api = 0, 1
         print("Starting scraping...")
         iterations = 0
+
         try:
+
             while len(users) < self.max_users and len(queue) > 0:
+
                 print(f'\n\nUsers: {len(users)}.\nEdges: {len(edges)}.\nQueue: {len(queue)}.')
                 user_id = queue.pop(0)
-                if isinstance(user_id, User):
-                    user = user_id
-                else:
-                    try:
-                        user = apis[followers_api].get_user(user_id)
-                        user = User(user)
-                    except tweepy.error.TweepError as exc:
-                        print(f"\nCatched TweepError ({exc.response.title}: {exc.response.detail})."
-                          f"\nIgnoring user.")
-                        continue
+
+                try:
+                    user = apis[followers_api].get_user(user_id)
+                    user = User(user)
+                except tweepy.error.TweepError as exc:
+                    print(f"\nCatched TweepError ({exc.response}). Ignoring user.")
+                    continue
 
                 users.append(user)
                 visited_ids.add(user.id)
 
-                if len(users) > 1 and (user.attrs.friends_count > self.max_connections or user.attrs.followers_count > self.max_connections):
+                if user.attrs.friends_count > self.max_connections or user.attrs.followers_count > self.max_connections:
                     continue
 
-                followers_list = list()
-                followers = tweepy.Cursor(apis[followers_api].followers_ids, id=user.id).pages()
                 try:
-                    for follower_page in followers:
-                        followers_list.extend(follower_page)
+                    follower_cursor = tweepy.Cursor(apis[followers_api].followers_ids, id=user.id).pages()
+                    followee_cursor = tweepy.Cursor(apis[followees_api].friends_ids, id=user.id).pages()
+                    followers = self.get_connections_list(follower_cursor)
+                    followees = self.get_connections_list(followee_cursor)
                 except tweepy.error.TweepError as exc:
-                    print(f"\nCatched TweepError ({exc.response.title}: {exc.response.detail})."
-                          f"\nIgnoring user.")
+                    print(f"\nCatched TweepError ({exc.response}). Ignoring user.")
                     continue
 
-                # print(len(followers_list))
-
-                followees_list = list()
-                followees = tweepy.Cursor(apis[followees_api].friends_ids, id=user.id).pages()
-                try:
-                    for followee_page in followees:
-                        followees_list.extend(followee_page)
-                except tweepy.error.TweepError as exc:
-                    print(f"\nCatched TweepError ({exc.response.title}: {exc.response.detail})."
-                          f"\nIgnoring user.")
-                    continue
-
-                # print(len(followees_list))
-
-                for follower_id in followers_list:
+                for follower_id in followers:
                     if follower_id not in visited_ids:
                         edges.append((follower_id, user.id))
-                        queue.append(follower_id)
+                        if follower_id not in queue_set and len(queue) < self.max_connections:
+                            queue.append(follower_id)
+                            queue_set.add(follower_id)
 
-                for followee_id in followees_list:
+                for followee_id in followees:
                     if followee_id not in visited_ids:
                         edges.append((user.id, followee_id))
-                        queue.append(followee_id)
+                        if followee_id not in queue_set and len(queue) < self.max_connections:
+                            queue.append(followee_id)
+                            queue_set.add(followee_id)
 
                 iterations += 1
 
@@ -163,22 +133,56 @@ class UsersScraper:
                 followees_api = (followees_api + 1) % 2
 
                 if iterations % self.save_interval == 0:
-                    scraper_state = UserScraperState(
-                        queue=queue,
-                        visited_ids=visited_ids,
-                        users=users,
-                        edges=edges
-                    )
-                    scraper_state.save(self.data_path)
+                    self.state.save(self.data_path)
+
         except KeyboardInterrupt:
             print("\n\nInterrupt received. Terminating...")
         finally:
             print("Saving scraper state...")
-            scraper_state = UserScraperState(
-                queue=queue,
-                visited_ids=visited_ids,
-                users=users,
-                edges=edges
-            )
-            scraper_state.save(self.data_path)
+            self.state.save(self.data_path)
             print("Done.")
+
+    def get_connections_list(self, cursor):
+        connections_list = list()
+        for page in cursor:
+            connections_list.extend(page)
+        return connections_list
+
+    @staticmethod
+    def get_origin_user(api, max_connections):
+        print(f'Obtaining the origin user..')
+        n_random_tweets = 100
+
+        places = api.geo_search(query="USA", granularity="country")
+        place_id = places[0].id
+
+        cursor = tweepy.Cursor(
+            api.search,
+            q=f"place:{place_id}").items(n_random_tweets)
+
+        tweets = limit_handler(cursor)
+
+        users = [tweet.user for tweet in tweets]
+
+        indices = list(range(len(users)))
+
+        found = False
+        while len(indices) > 0:
+            random_index = random.randint(0, len(users) - 1)
+            index = indices.pop(random_index)
+            random_user = users[index]
+            if (random_user.friends_count <= max_connections and random_user.followers_count <= max_connections):
+                found = True
+                break
+
+        if not found:
+            raise Exception('Found no users matching the requirements')
+
+        print(f"Id: {random_user.id}")
+        print(f"Screen name: {random_user.screen_name}")
+        print(f"Location: {random_user.location}")
+        print(f"Number of followers: {random_user.followers_count}")
+        print(f"Number of followees: {random_user.friends_count}")
+        print(f"Number of tweets:", {random_user.statuses_count})
+
+        return User(random_user)

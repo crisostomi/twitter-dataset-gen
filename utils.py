@@ -22,33 +22,6 @@ def parse_auth_details(auth_details_file):
         auth_details.append(auth_detail_i)
     return auth_details
 
-
-def get_origin_user(api):
-    n_random_tweets = 100
-
-    places = api.geo_search(query="USA", granularity="country")
-    place_id = places[0].id
-
-    cursor = tweepy.Cursor(
-        api.search,
-        q=f"place:{place_id}").items(n_random_tweets)
-
-    tweets = limit_handler(cursor)
-
-    users = [tweet.user for tweet in tweets]
-
-    random_user = users[random.randint(0, len(users) - 1)]
-
-    print(f"Id: {random_user.id}")
-    print(f"Screen name: {random_user.screen_name}")
-    print(f"Location: {random_user.location}")
-    print(f"Number of followers: {random_user.followers_count}")
-    print(f"Number of followees: {random_user.friends_count}")
-    print(f"Number of tweets:", {random_user.statuses_count})
-
-    return User(random_user)
-
-
 def limit_handler(cursor):
     while True:
         try:
