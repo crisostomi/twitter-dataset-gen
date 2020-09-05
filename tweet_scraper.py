@@ -3,6 +3,7 @@ from tweet import Tweet
 from utils import save_json, load_json
 import os
 
+
 class TweetScraperState:
     def __init__(
             self,
@@ -32,19 +33,12 @@ class TweetScraperState:
         # load users
         try:
             tweets = load_json(tweets_path)
-        except Exception as exc:
-            print("ERROR ON TWEET LOADING!")
-            print(exc)
-        try:
             users_queue = load_json(users_queue_path)
-        except Exception as exc:
-            print("ERROR ON USERS QUEUE LOADING!")
-            print(exc)
-        try:
             time_window = load_json(time_window_path)
         except Exception as exc:
-            print("ERROR ON TIME WINDOW LOADING!")
+            print("ERROR ON DATA LOADING!")
             print(exc)
+            exit(-1)
 
         return TweetScraperState(tweets=tweets, users_queue=users_queue, time_window=time_window)
 
@@ -105,13 +99,12 @@ class TweetScraper:
                 # Retaining only tweets in [t_s, t_e]
                 user_tweets_list = []
                 for tweet in user_tweets:
-                    if tweet.created_at >= ts and tweet.created_at <= te:
+                    if ts <= tweet.created_at <= te:
                         tweet = Tweet(tweet)
                         assert tweet.author == user_id
                         user_tweets_list.append(tweet)
 
                 # Register user tweets
-
                 tweets[user_id] = user_tweets_list
                 tweets_count += len(user_tweets_list)
 

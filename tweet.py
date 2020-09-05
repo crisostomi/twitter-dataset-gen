@@ -1,5 +1,6 @@
 import tweepy
 
+
 class Tweet(dict):
     def __init__(self, tweet):
         assert isinstance(tweet, tweepy.models.Status)

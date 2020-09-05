@@ -91,9 +91,13 @@ if __name__ == '__main__':
     ]
     print("Done.")
 
-    if SCRAPING == 'users':
-        scrape_users(apis)
-    elif SCRAPING == 'tweets':
-        scrape_tweets(apis)
-    else:
-        raise NotImplementedError
+    tweet = apis[0].get_status(id=1300952500242055169)
+    # get_status
+    print(tweet)
+
+    # if SCRAPING == 'users':
+    #     scrape_users(apis)
+    # elif SCRAPING == 'tweets':
+    #     scrape_tweets(apis)
+    # else:
+    #     raise NotImplementedError
