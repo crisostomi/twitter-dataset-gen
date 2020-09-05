@@ -1,6 +1,5 @@
-import tweepy
 from user import User
-from utils import save_json, load_json, limit_handler
+from utils import *
 import os
 import random
 
@@ -19,16 +18,17 @@ class UserScraperState:
             self.load_state(data_path)
 
     def load_state(self, folder):
-        users_path = os.path.join(folder, "users.json")
-        edges_path = os.path.join(folder, "edges.json")
-        queue_path = os.path.join(folder, 'queue.json')
-        visited_ids_path = os.path.join(folder, 'visited.json')
+
+        users_path = os.path.join(folder, "users.pkl")
+        edges_path = os.path.join(folder, "edges.pkl")
+        queue_path = os.path.join(folder, 'queue.pkl')
+        visited_ids_path = os.path.join(folder, 'visited.pkl')
 
         try:
-            self.users = load_json(users_path)
-            self.edges = load_json(edges_path)
-            self.queue = load_json(queue_path)
-            self.visited_ids = set(load_json(visited_ids_path))
+            self.users = load_dill(users_path)
+            self.edges = load_dill(edges_path)
+            self.queue = load_dill(queue_path)
+            self.visited_ids = set(load_dill(visited_ids_path))
         except Exception as exc:
             print(f'Error on data loading.')
             print(exc)
@@ -36,19 +36,16 @@ class UserScraperState:
 
     def save(self, folder):
         print("Saving scraper state...")
-        # save users and edges
-        users_path = os.path.join(folder, "users.json")
-        edges_path = os.path.join(folder, "edges.json")
 
-        save_json(self.users, users_path)
-        save_json(self.edges, edges_path)
+        users_path = os.path.join(folder, "users.pkl")
+        edges_path = os.path.join(folder, "edges.pkl")
+        queue_path = os.path.join(folder, 'queue.pkl')
+        visited_ids_path = os.path.join(folder, 'visited.pkl')
 
-        # Save state of queue and visited
-        queue_path = os.path.join(folder, 'queue.json')
-        visited_ids_path = os.path.join(folder, 'visited.json')
-
-        save_json(self.queue, queue_path)
-        save_json(list(self.visited_ids), visited_ids_path)
+        save_dill(self.users, users_path)
+        save_dill(self.edges, edges_path)
+        save_dill(self.queue, queue_path)
+        save_dill(list(self.visited_ids), visited_ids_path)
 
         print("Done.")
 

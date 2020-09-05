@@ -1,6 +1,6 @@
 import tweepy
 from tweet import Tweet
-from utils import save_json, load_json
+from utils import save_dill, load_dill
 import os
 
 
@@ -22,9 +22,9 @@ class TweetScraperState:
 
     @staticmethod
     def load(folder):
-        tweets_path = os.path.join(folder, "tweets.json")
-        users_queue_path = os.path.join(folder, "users_queue.json")
-        time_window_path = os.path.join(folder, "time_window.json")
+        tweets_path = os.path.join(folder, "tweets.pkl")
+        users_queue_path = os.path.join(folder, "users_queue.pkl")
+        time_window_path = os.path.join(folder, "time_window.pkl")
 
         tweets = []
         users_queue = []
@@ -32,9 +32,9 @@ class TweetScraperState:
 
         # load users
         try:
-            tweets = load_json(tweets_path)
-            users_queue = load_json(users_queue_path)
-            time_window = load_json(time_window_path)
+            tweets = load_dill(tweets_path)
+            users_queue = load_dill(users_queue_path)
+            time_window = load_dill(time_window_path)
         except Exception as exc:
             print("ERROR ON DATA LOADING!")
             print(exc)
@@ -44,13 +44,13 @@ class TweetScraperState:
 
     def save(self, folder):
         print("Saving scraper state...")
-        tweets_path = os.path.join(folder, "tweets.json")
-        users_queue_path = os.path.join(folder, "users_queue.json")
-        time_window_path = os.path.join(folder, "time_window.json")
+        tweets_path = os.path.join(folder, "tweets.pkl")
+        users_queue_path = os.path.join(folder, "users_queue.pkl")
+        time_window_path = os.path.join(folder, "time_window.pkl")
 
-        save_json(self.tweets, tweets_path)
-        save_json(self.users_queue, users_queue_path)
-        save_json(self.time_window, time_window_path)
+        save_dill(self.tweets, tweets_path)
+        save_dill(self.users_queue, users_queue_path)
+        save_dill(self.time_window, time_window_path)
         print('Done.')
 
 
@@ -85,7 +85,7 @@ class TweetScraper:
                 # Getting tweets
                 user_tweets = []
                 try:
-                    for tweet_page in tweepy.Cursor(api.user_timeline, id=user_id, tweet_mode="extended").pages():
+                    for tweet_page in tweepy.Cursor(api.user_timeline, user_id=user_id, tweet_mode="extended").pages():
                         user_tweets.extend(tweet_page)
                         last_timestamp = user_tweets[-1].created_at
 

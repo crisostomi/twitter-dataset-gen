@@ -1,16 +1,12 @@
 import json
 import jsonpickle
-import os
+import dill
 import tweepy
-import random
 import time
 import traceback
 from ssl import SSLError
 from requests.exceptions import Timeout, ConnectionError
 from urllib3.exceptions import ReadTimeoutError
-
-from user import User
-import tweepy
 
 
 def parse_auth_details(auth_details_file):
@@ -38,13 +34,23 @@ def limit_handler(cursor):
             print(traceback.format_exc())
             exit(0)
 
-def save_json(data, path):
-    with open(path, 'w+') as f:
-        encoded_data = jsonpickle.encode(data)
-        json.dump(encoded_data, f)
+# def save_json(data, path):
+#     with open(path, 'w+') as f:
+#         encoded_data = jsonpickle.encode(data)
+#         json.dump(encoded_data, f)
+#
+# def load_json(path):
+#     with open(path, 'r') as f:
+#         encoded_data = json.load(f)
+#         data = jsonpickle.decode(encoded_data)
+#     return data
 
-def load_json(path):
-    with open(path, 'r') as f:
-        encoded_data = json.load(f)
-        data = jsonpickle.decode(encoded_data)
-    return data
+def save_dill(obj, path):
+    with open(path, 'wb+') as f:
+        dill.dump(obj, f)
+
+def load_dill(path):
+    with open(path, 'rb') as f:
+        obj = dill.load(f)
+
+    return obj

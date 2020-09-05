@@ -1,10 +1,15 @@
 from utils import *
+import os
 from users_scraper import UserScraper, UserScraperState
 from tweet_scraper import TweetScraper, TweetScraperState
 from datetime import datetime, timedelta
 
 from user import User
 import tweepy
+
+# import sys
+# sys.modules['User'] = User
+# User.User = User
 
 DATA_PATH = './data'
 AUTH_DETAILS_FILE = 'config.txt'
@@ -13,7 +18,7 @@ AUTH_DETAILS_FILE = 'config.txt'
 MAX_USERS = 10000
 MAX_CONNECTIONS = 1000
 
-COLD_START = True
+COLD_START = False
 SCRAPING = 'tweets'
 SAVE_INTERVAL = 10
 
@@ -48,10 +53,11 @@ def scrape_tweets(apis):
         ts = te - timedelta(days=TIME_PERIOD)
         time_window = (ts, te)
 
-        users_path = os.path.join(DATA_PATH, "users.json")
-        users = load_json(users_path)
-        users = [User(user) for user in users]
+        users_path = os.path.join(DATA_PATH, "users.pkl")
+        users = load_dill(users_path)
+        # users = [User(user) for user in users]
         users_queue = list(set([user.id for user in users]))
+        print(len(users_queue))
         scraper_state = TweetScraperState(
             users_queue=users_queue,
             time_window=time_window,
@@ -91,13 +97,33 @@ if __name__ == '__main__':
     ]
     print("Done.")
 
-    tweet = apis[0].get_status(id=1300952500242055169)
-    # get_status
-    print(tweet)
-
-    # if SCRAPING == 'users':
-    #     scrape_users(apis)
-    # elif SCRAPING == 'tweets':
-    #     scrape_tweets(apis)
-    # else:
-    #     raise NotImplementedError
+    if SCRAPING == 'users':
+        scrape_users(apis)
+    elif SCRAPING == 'tweets':
+        scrape_tweets(apis)
+    else:
+        raise NotImplementedError
+    # users_path = os.path.join(DATA_PATH, "users.json")
+    # edges_path = os.path.join(DATA_PATH, "edges.json")
+    # queue_path = os.path.join(DATA_PATH, "queue.json")
+    # visited_path = os.path.join(DATA_PATH, "visited.json")
+    #
+    # print("Loading json...")
+    # users = load_json(users_path)
+    # edges = load_json(edges_path)
+    # queue = load_json(queue_path)
+    # visited = load_json(visited_path)
+    # print("Done.")
+    #
+    # users_path = os.path.join(DATA_PATH, "users.pkl")
+    # edges_path = os.path.join(DATA_PATH, "edges.pkl")
+    # queue_path = os.path.join(DATA_PATH, "queue.pkl")
+    # visited_path = os.path.join(DATA_PATH, "visited.pkl")
+    #
+    # print("Saving pkl with dill...")
+    #
+    # save_dill(users, users_path)
+    # save_dill(edges, edges_path)
+    # save_dill(queue, queue_path)
+    # save_dill(visited, visited_path)
+    # print("Done.")

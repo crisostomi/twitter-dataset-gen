@@ -1,11 +1,10 @@
 import tweepy
 
 
-class Tweet(dict):
+class Tweet:
     def __init__(self, tweet):
         assert isinstance(tweet, tweepy.models.Status)
 
-        super().__init__(self, id=tweet.id, author=tweet.user.id, attrs=tweet)
         self.id = tweet.id
         self.author = tweet.user.id
         self.attrs = tweet
