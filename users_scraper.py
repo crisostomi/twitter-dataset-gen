@@ -83,9 +83,14 @@ class UserScraper:
         print("Starting scraping...")
         iterations = 0
 
+        enough_in_queue = False
+
         try:
 
             while len(users) < self.max_users and len(queue) > 0:
+
+                if len(queue) >= self.max_users:
+                    enough_in_queue = True
 
                 print(f'\n\nUsers: {len(users)}.\nEdges: {len(edges)}.\nQueue: {len(queue)}.')
                 user_id = queue.pop(0)
@@ -115,14 +120,14 @@ class UserScraper:
                 for follower_id in followers:
                     if follower_id not in visited_ids:
                         edges.append((follower_id, user.id))
-                        if follower_id not in queue_set and len(queue) < self.max_users:
+                        if follower_id not in queue_set and not enough_in_queue:
                             queue.append(follower_id)
                             queue_set.add(follower_id)
 
                 for followee_id in followees:
                     if followee_id not in visited_ids:
                         edges.append((user.id, followee_id))
-                        if followee_id not in queue_set and len(queue) < self.max_users:
+                        if followee_id not in queue_set and not enough_in_queue:
                             queue.append(followee_id)
                             queue_set.add(followee_id)
 

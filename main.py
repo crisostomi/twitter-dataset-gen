@@ -18,8 +18,8 @@ AUTH_DETAILS_FILE = 'config.txt'
 MAX_USERS = 10000
 MAX_CONNECTIONS = 1000
 
-COLD_START = False
-SCRAPING = 'tweets'
+COLD_START = True
+SCRAPING = 'users'
 SAVE_INTERVAL = 10
 
 ### Tweet scraping params ###
