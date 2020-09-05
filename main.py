@@ -15,10 +15,10 @@ DATA_PATH = './data'
 AUTH_DETAILS_FILE = 'config.txt'
 
 ### User scraping params ###
-MAX_USERS = 10000
+MAX_USERS = 100000
 MAX_CONNECTIONS = 1000
 
-COLD_START = True
+COLD_START = False
 SCRAPING = 'users'
 SAVE_INTERVAL = 10
 

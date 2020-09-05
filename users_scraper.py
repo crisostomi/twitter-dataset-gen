@@ -72,6 +72,7 @@ class UserScraper:
         self.max_connections = max_connections
         self.save_interval = save_interval
 
+    # TODO: handle somehow nodes with many connections
     def scrape(self, apis):
         assert self.data_path is not None and self.state is not None
 
@@ -181,11 +182,11 @@ class UserScraper:
         if not found:
             raise Exception('Found no users matching the requirements')
 
-        print(f"Id: {random_user.id}")
-        print(f"Screen name: {random_user.screen_name}")
-        print(f"Location: {random_user.location}")
-        print(f"Number of followers: {random_user.followers_count}")
-        print(f"Number of followees: {random_user.friends_count}")
-        print(f"Number of tweets:", {random_user.statuses_count})
+        print(f"\tId: {random_user.id}")
+        print(f"\tScreen name: {random_user.screen_name}")
+        print(f"\tLocation: {random_user.location}")
+        print(f"\tNumber of followers: {random_user.followers_count}")
+        print(f"\tNumber of followees: {random_user.friends_count}")
+        print(f"\tNumber of tweets:", {random_user.statuses_count})
 
         return User(random_user)
