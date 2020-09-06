@@ -4,12 +4,7 @@ from users_scraper import UserScraper, UserScraperState
 from tweet_scraper import TweetScraper, TweetScraperState
 from datetime import datetime, timedelta
 
-from user import User
 import tweepy
-
-# import sys
-# sys.modules['User'] = User
-# User.User = User
 
 DATA_PATH = './data'
 AUTH_DETAILS_FILE = 'config.txt'
@@ -18,8 +13,8 @@ AUTH_DETAILS_FILE = 'config.txt'
 MAX_USERS = 100000
 MAX_CONNECTIONS = 1000
 
-COLD_START = False
-SCRAPING = 'users'
+COLD_START = True
+SCRAPING = 'tweets'
 SAVE_INTERVAL = 10
 
 ### Tweet scraping params ###
@@ -55,8 +50,8 @@ def scrape_tweets(apis):
 
         users_path = os.path.join(DATA_PATH, "users.pkl")
         users = load_dill(users_path)
-        # users = [User(user) for user in users]
         users_queue = list(set([user.id for user in users]))
+
         print(len(users_queue))
         scraper_state = TweetScraperState(
             users_queue=users_queue,
@@ -103,27 +98,3 @@ if __name__ == '__main__':
         scrape_tweets(apis)
     else:
         raise NotImplementedError
-    # users_path = os.path.join(DATA_PATH, "users.json")
-    # edges_path = os.path.join(DATA_PATH, "edges.json")
-    # queue_path = os.path.join(DATA_PATH, "queue.json")
-    # visited_path = os.path.join(DATA_PATH, "visited.json")
-    #
-    # print("Loading json...")
-    # users = load_json(users_path)
-    # edges = load_json(edges_path)
-    # queue = load_json(queue_path)
-    # visited = load_json(visited_path)
-    # print("Done.")
-    #
-    # users_path = os.path.join(DATA_PATH, "users.pkl")
-    # edges_path = os.path.join(DATA_PATH, "edges.pkl")
-    # queue_path = os.path.join(DATA_PATH, "queue.pkl")
-    # visited_path = os.path.join(DATA_PATH, "visited.pkl")
-    #
-    # print("Saving pkl with dill...")
-    #
-    # save_dill(users, users_path)
-    # save_dill(edges, edges_path)
-    # save_dill(queue, queue_path)
-    # save_dill(visited, visited_path)
-    # print("Done.")

@@ -74,11 +74,17 @@ class TweetScraper:
         tweets, users_id_queue, time_window = self.state.tweets, self.state.users_queue, self.state.time_window
         ts, te = time_window
 
+        scraped_users = {tweet.author for tweet in tweets}
+
         try:
             iterations = 0
             tweets_count = sum([len(v) for k, v in tweets.items()])
             while len(users_id_queue) > 0:
                 user_id = users_id_queue.pop(0)
+
+                if user_id in scraped_users:
+                    continue
+
                 print(f"\n\nUsers left: {len(users_id_queue)}.\nTweets so far: {tweets_count}.\n")
                 api = apis[api_idx]
 
