@@ -7,7 +7,7 @@ import traceback
 from ssl import SSLError
 from requests.exceptions import Timeout, ConnectionError
 from urllib3.exceptions import ReadTimeoutError
-
+from enum import Enum
 
 def parse_auth_details(auth_details_file):
     with open(auth_details_file, 'r') as f:
@@ -17,6 +17,19 @@ def parse_auth_details(auth_details_file):
         auth_detail_i = { t.split(':')[0]: t.split(':')[1].strip() for t in content[i:i+4] }
         auth_details.append(auth_detail_i)
     return auth_details
+
+def get_authentications(auth_details):
+    auths = []
+    for item in auth_details:
+        consumer_key = item['CONSUMER_KEY']
+        consumer_secret = item['CONSUMER_SECRET']
+        access_key = item['ACCESS_TOKEN']
+        access_secret = item['ACCESS_TOKEN_SECRET']
+
+        auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+        auth.set_access_token(access_key, access_secret)
+        auths.append(auth)
+    return auths
 
 def limit_handler(cursor):
     while True:
@@ -54,3 +67,8 @@ def load_dill(path):
         obj = dill.load(f)
 
     return obj
+
+
+class ScrapeMode(Enum):
+    USERS = 'users'
+    TWEETS = 'tweets'

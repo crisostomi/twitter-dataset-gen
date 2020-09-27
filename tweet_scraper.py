@@ -42,9 +42,9 @@ class TweetScraperState:
 
         return TweetScraperState(tweets=tweets, users_queue=users_queue, time_window=time_window)
 
-    def save(self, folder):
+    def save(self, folder, iteration):
         print("Saving scraper state...")
-        tweets_path = os.path.join(folder, "tweets.pkl")
+        tweets_path = os.path.join(folder, f"tweets_{iteration}.pkl")
         users_queue_path = os.path.join(folder, "users_queue.pkl")
         time_window_path = os.path.join(folder, "time_window.pkl")
 
@@ -74,18 +74,16 @@ class TweetScraper:
         tweets, users_id_queue, time_window = self.state.tweets, self.state.users_queue, self.state.time_window
         ts, te = time_window
 
-        scraped_users = {tweet.author for tweet in tweets}
+        scraped_users = {key for key, value in tweets.items()}
+        to_scrape_queue = [ user for user in users_id_queue if user not in scraped_users ]
 
         try:
             iterations = 0
             tweets_count = sum([len(v) for k, v in tweets.items()])
-            while len(users_id_queue) > 0:
-                user_id = users_id_queue.pop(0)
+            while len(to_scrape_queue) > 0:
+                user_id = to_scrape_queue.pop(0)
 
-                if user_id in scraped_users:
-                    continue
-
-                print(f"\n\nUsers left: {len(users_id_queue)}.\nTweets so far: {tweets_count}.\n")
+                print(f"\n\nUsers left: {len(to_scrape_queue)}.\nTweets so far: {tweets_count}.\n")
                 api = apis[api_idx]
 
                 # Getting tweets
@@ -120,9 +118,9 @@ class TweetScraper:
                 # Save progress
                 iterations += 1
                 if iterations % self.save_interval == 0:
-                    self.state.save(self.data_path)
+                    self.state.save(self.data_path, iterations)
 
         except KeyboardInterrupt:
             print("\n\nInterrupt received. Terminating...")
         finally:
-            self.state.save(self.data_path)
+            self.state.save(self.data_path, self.save_interval)

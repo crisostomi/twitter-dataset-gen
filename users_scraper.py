@@ -73,6 +73,8 @@ class UserScraper:
         self.save_interval = save_interval
 
     # TODO: handle somehow nodes with many connections
+    # TODO: save enough_in_queue state to file, otherwise when reloaded it will again add users to the queue
+
     def scrape(self, apis):
         assert self.data_path is not None and self.state is not None
 
@@ -87,8 +89,11 @@ class UserScraper:
         enough_in_queue = False
 
         try:
-
             while len(users) < self.max_users and len(queue) > 0:
+                api = apis[iterations % 2]
+
+                # print(f'There are {apis[followers_api].rate_limit_status()} requests left for'
+                #       f'followers and {apis[followees_api].rate_limit_status()} for followes')
 
                 if len(queue) >= self.max_users:
                     enough_in_queue = True
@@ -97,7 +102,7 @@ class UserScraper:
                 user_id = queue.pop(0)
 
                 try:
-                    user = apis[followers_api].get_user(user_id)
+                    user = api.get_user(user_id)
                     user = User(user)
                 except tweepy.error.TweepError as exc:
                     print(f"\nCatched TweepError ({exc}). Ignoring user.")
@@ -110,8 +115,8 @@ class UserScraper:
                     continue
 
                 try:
-                    follower_cursor = tweepy.Cursor(apis[followers_api].followers_ids, id=user.id).pages()
-                    followee_cursor = tweepy.Cursor(apis[followees_api].friends_ids, id=user.id).pages()
+                    follower_cursor = tweepy.Cursor(api.followers_ids, id=user.id).pages()
+                    followee_cursor = tweepy.Cursor(api.friends_ids, id=user.id).pages()
                     followers = self.get_connections_list(follower_cursor)
                     followees = self.get_connections_list(followee_cursor)
                 except tweepy.error.TweepError as exc:
@@ -133,10 +138,6 @@ class UserScraper:
                             queue_set.add(followee_id)
 
                 iterations += 1
-
-                # Switch apis to balance load
-                followers_api = (followers_api + 1) % 2
-                followees_api = (followees_api + 1) % 2
 
                 if iterations % self.save_interval == 0:
                     self.state.save(self.data_path)
